@@ -1,0 +1,130 @@
+var t = new Date();
+var h = t.getHours();
+var m = t.getMinutes();
+var s = t.getSeconds();
+
+/* Function to compare value against array of values 
+   @input array, value
+   @return true/false
+*/
+function include(arr, val) {
+    for(var i=0; i<arr.length; i++) {
+        if (arr[i] == val) return true;
+    }
+    return false;
+}
+/* Function to publish ON value for a topic
+   @input 'true' condition
+   @return mqtt publish string
+*/
+function pubMqtt_prssw1(state){
+    c = {};
+    if(state === true){
+        c = {"board":"n003","pin":"gpio3","topic":"prssw1","cmd":1};
+    }
+    else{
+        c = {"board":"n003","pin":"gpio3","topic":"prssw1","cmd":0};
+    }
+    return c;
+}
+function pubMqtt_sw2d(state){
+    c = {};
+    if(state === true){
+        c = {"board":"n001","pin":"gpio3","topic":"sw2d","cmd":1};
+    }
+    else{
+        c = {"board":"n001","pin":"gpio3","topic":"sw2d","cmd":0};
+    }
+    return c;
+}
+/* Function to create an duration array
+   @input Minute Array
+   @return Minute array with added duration
+*/
+function durationArray(min,dur)
+{
+    for(var i=0; i<min.length; i++) {
+        min[i] = min[i]+dur;
+    }
+    return min;
+}
+
+
+/*
+ Read Schedule/Timer info from File for sch/prssw1
+*/
+if(msg.topic === 'sch/prssw1')
+{
+    var hrs  = String(msg.payload.Hrs).split(",");
+    var mins = String(msg.payload.Mins).split(",");
+    var durs  = durationArray(mins,parseInt(msg.payload.Durs));
+
+    var c1  = false;
+    var c21 = false; //Start min
+    var c22 = false; //End min
+    var c3  = false;
+
+    c1  = include(hrs,h);   // Hrs
+    c21 = include(mins,m);  // Mins to start
+    c22 = include(durs,m);  // Mins to stop
+    c3  = (0===s)?"true":"false"; // Secs at 0
+
+    //topic {"board":"n003","pin":"gpio3","topic":"prssw1","cmd":1};
+    if(true === c1 && c21 && c3)
+    {
+        msg.topic = 'Farm/N003/prssw1';
+        msg.payload = pubMqtt_prssw1(true);
+        return msg;
+    }
+    else if(true === c1 && c22 && c3)
+    {
+        msg.topic = 'Farm/N003/prssw1';
+        msg.payload = pubMqtt_prssw1(false);
+        return msg;
+    }
+    else {
+        msg.payload ={};
+        //return msg;
+    }
+}
+
+/*
+ Read Schedule/Timer info from File for sch/sw2d
+*/
+if(msg.topic === 'sch/sw2d')
+{
+    var topic ='Farm/N001/sw2d';
+    var hrs  = String(msg.payload.Hrs).split(",");
+    var mins = String(msg.payload.Mins).split(",");
+    var durs  = durationArray(mins,parseInt(msg.payload.Durs));
+
+    var c1  = false;
+    var c21 = false; //Start min
+    var c22 = false; //End min
+    var c3  = false;
+
+    c1  = include(hrs,h);   // Hrs
+    c21 = include(mins,m);  // Mins to start
+    c22 = include(durs,m);  // Mins to stop
+    c3  = (0===s)?"true":"false"; // Secs at 0
+
+    
+    //topic {"board":"n003","pin":"gpio3","topic":"prssw1","cmd":1};
+    if(true === c1 && c21 && c3)
+    {
+        msg.topic = topic;
+        msg.payload = pubMqtt_sw2d(true);
+        return msg;
+    }
+    else if(true === c1 && c22 && c3)
+    {
+        msg.topic = topic;
+        msg.payload = pubMqtt_sw2d(false);
+        return msg;
+    }
+    else {
+        msg.payload ={};
+        //return msg;
+    }
+}
+
